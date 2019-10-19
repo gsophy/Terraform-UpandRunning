@@ -46,3 +46,4 @@ output "external_dns_name" {
   value = aws_instance.example.public_dns
   description = "The external DNS name of the web server"
 }
+
