@@ -69,16 +69,16 @@ resource "aws_autoscaling_group" "example" {
 }
 
 
-resource "aws_security_group" "instance" {
-    name = "${var.cluster_name}-sg"
+# resource "aws_security_group" "instance" {
+#     name = "${var.cluster_name}-sg"
 
-    ingress {
-        from_port = var.server_port
-        to_port = var.server_port
-        protocol = var.any_protocol
-        cidr_blocks = var.all_ips
-    }
-}
+#     ingress {
+#         from_port = var.server_port
+#         to_port = var.server_port
+#         protocol = var.any_protocol
+#         cidr_blocks = var.all_ips
+#     }
+# }
 
 resource "aws_lb" "example" {
   name = "${var.cluster_name}-alb"
@@ -106,24 +106,29 @@ resource "aws_lb_listener" "http" {
 
 resource "aws_security_group" "alb" {
   name = "${var.cluster_name}.alb-sg"
+}
 
-#  Allow inbound HTTP requests
-  ingress {
+resource "aws_security_group_rule" "allow_http_inbound" {
+  type = "ingress"
+  security_group_id = aws_security_group.alb.id
+
       from_port = var.http_port
       to_port = var.http_port
       protocol = var.tcp_protocol
       cidr_blocks = var.all_ips
-  }
+}
+# It's a good practice to break out the ingress and egress rules
+# into separate resources and associate the rules with the same security group id.
 
-#  Allow all outbound requests
-  egress {
+resource "aws_security_group_rule" "allow_all_outbound" {
+  type = "egress"
+  security_group_id = aws_security_group.alb.id
+
       from_port = var.any_port
       to_port = var.any_port
       protocol = var.any_protocol
       cidr_blocks = var.all_ips
-  }
 }
-
 
 resource "aws_lb_target_group" "asg" {
   name = "${var.cluster_name}-asg-tg"
