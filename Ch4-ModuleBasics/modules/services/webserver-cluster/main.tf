@@ -10,6 +10,14 @@ data "aws_subnet_ids" "default" {
   vpc_id = data.aws_vpc.default.id
 }
 
+locals {
+  http_port = 80
+  any_port = 0
+  any_protocol = "-1"
+  tcp_protocol = "tcp"
+  all_ips = ["0.0.0.0/0"]
+}
+
 
 resource "aws_launch_configuration" "example" {
     image_id = "ami-04b9e92b5572fa0d1"
@@ -67,8 +75,8 @@ resource "aws_security_group" "instance" {
     ingress {
         from_port = var.server_port
         to_port = var.server_port
-        protocol = "tcp"
-        cidr_blocks = ["0.0.0.0/0"]
+        protocol = var.any_protocol
+        cidr_blocks = var.all_ips
     }
 }
 
@@ -81,7 +89,7 @@ resource "aws_lb" "example" {
 
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.example.arn
-  port = 80
+  port = var.http_port
   protocol = "HTTP"
 
 # By default, return a simple 404: Page not Found page for requests that don't match a listener rule
@@ -101,18 +109,18 @@ resource "aws_security_group" "alb" {
 
 #  Allow inbound HTTP requests
   ingress {
-      from_port = 80
-      to_port = 80
-      protocol = "tcp"
-      cidr_blocks = ["0.0.0.0/0"]
+      from_port = var.http_port
+      to_port = var.http_port
+      protocol = var.tcp_protocol
+      cidr_blocks = var.all_ips
   }
 
 #  Allow all outbound requests
   egress {
-      from_port = 0
-      to_port = 0
-      protocol = -1
-      cidr_blocks = ["0.0.0.0/0"]
+      from_port = var.any_port
+      to_port = var.any_port
+      protocol = var.any_protocol
+      cidr_blocks = var.all_ips
   }
 }
 
